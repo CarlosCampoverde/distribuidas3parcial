@@ -15,9 +15,10 @@ WORKDIR /build/auth-service
 
 # Build application (skip tests for faster builds)
 RUN apk add --no-cache maven && \
+  mvn -f /build/pom.xml -N -DskipTests install && \
   mvn -f /build/common/pom.xml -DskipTests install && \
-  mvn clean package -DskipTests && \
-  mv target/*.jar /build/app.jar
+  mvn -f /build/auth-service/pom.xml clean package -DskipTests && \
+  mv /build/auth-service/target/*.jar /build/app.jar
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine

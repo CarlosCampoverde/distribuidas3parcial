@@ -1,0 +1,35 @@
+---
+# Crear namespace de LogiFlow
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logiflow
+  labels:
+    app: logiflow
+
+---
+# ConfigMap con variables de entorno comunes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logiflow-config
+  namespace: logiflow
+data:
+  # Base de datos
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  
+  # RabbitMQ
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  
+  # Spring profiles
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+  
+  # Microservices URLs (para discovery interno)
+  AUTH_SERVICE_URL: "http://auth-service:8081"
+  PEDIDO_SERVICE_URL: "http://pedido-service:8082"
+  FLEET_SERVICE_URL: "http://fleet-service:8083"
+  BILLING_SERVICE_URL: "http://billing-service:8084"
+  GRAPHQL_SERVICE_URL: "http://graphql-service:8085"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8086"

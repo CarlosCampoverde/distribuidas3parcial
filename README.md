@@ -1,3 +1,19 @@
+# 🚀 LogiFlow - Sistema Distribuido de Entregas
+
+**Sistema de gestión de entregas basado en microservicios con Spring Boot 3.2 y Kubernetes**
+
+> Proyecto para el 3er Parcial de Sistemas Distribuidos
+
+## 📋 Contenido Rápido
+
+- [Inicio Rápido](#-inicio-rápido-docker)
+- [Kubernetes](#-kubernetes--minikube)
+- [Arquitectura](#-arquitectura)
+- [Servicios](#-servicios)
+- [Acceso a APIs](#-acceso-a-las-apis)
+
+---
+
 # LogiFlow - Plataforma Integral de Gestión de Operaciones para Delivery
 
 **Fase 1: Backend - Servicios REST y API Gateway**

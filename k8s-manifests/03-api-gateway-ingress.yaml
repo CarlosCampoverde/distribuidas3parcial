@@ -1,0 +1,128 @@
+---
+# API-GATEWAY SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: logiflow
+  labels:
+    app: api-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http-8080
+
+---
+# API-GATEWAY DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: logiflow
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: charly25/logiflow-api-gateway:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# INGRESS para acceso desde el exterior
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logiflow-ingress
+  namespace: logiflow
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 8080
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8081
+      - path: /pedidos
+        pathType: Prefix
+        backend:
+          service:
+            name: pedido-service
+            port:
+              number: 8082
+      - path: /flota
+        pathType: Prefix
+        backend:
+          service:
+            name: fleet-service
+            port:
+              number: 8083
+      - path: /billing
+        pathType: Prefix
+        backend:
+          service:
+            name: billing-service
+            port:
+              number: 8084
+      - path: /graphql
+        pathType: Prefix
+        backend:
+          service:
+            name: graphql-service
+            port:
+              number: 8085
+      - path: /notificaciones
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 8086

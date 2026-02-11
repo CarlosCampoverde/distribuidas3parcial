@@ -1,0 +1,375 @@
+---
+# AUTH-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: logiflow
+  labels:
+    app: auth-service
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: logiflow
+  labels:
+    app: auth-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: charly25/logiflow-auth-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres-service:5432/authdb"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "postgres123"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# PEDIDO-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedido-service
+  namespace: logiflow
+  labels:
+    app: pedido-service
+spec:
+  type: ClusterIP
+  selector:
+    app: pedido-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pedido-service
+  namespace: logiflow
+  labels:
+    app: pedido-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pedido-service
+  template:
+    metadata:
+      labels:
+        app: pedido-service
+    spec:
+      containers:
+      - name: pedido-service
+        image: charly25/logiflow-pedido-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres-service:5432/pedidodb"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "postgres123"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# FLEET-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-service
+  namespace: logiflow
+  labels:
+    app: fleet-service
+spec:
+  type: ClusterIP
+  selector:
+    app: fleet-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-service
+  namespace: logiflow
+  labels:
+    app: fleet-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fleet-service
+  template:
+    metadata:
+      labels:
+        app: fleet-service
+    spec:
+      containers:
+      - name: fleet-service
+        image: charly25/logiflow-fleet-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres-service:5432/fleetdb"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "postgres123"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# BILLING-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-service
+  namespace: logiflow
+  labels:
+    app: billing-service
+spec:
+  type: ClusterIP
+  selector:
+    app: billing-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: logiflow
+  labels:
+    app: billing-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: billing-service
+  template:
+    metadata:
+      labels:
+        app: billing-service
+    spec:
+      containers:
+      - name: billing-service
+        image: charly25/logiflow-billing-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8084
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres-service:5432/billingdb"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "postgres123"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8084
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# GRAPHQL-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql-service
+  namespace: logiflow
+  labels:
+    app: graphql-service
+spec:
+  type: ClusterIP
+  selector:
+    app: graphql-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql-service
+  namespace: logiflow
+  labels:
+    app: graphql-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql-service
+  template:
+    metadata:
+      labels:
+        app: graphql-service
+    spec:
+      containers:
+      - name: graphql-service
+        image: charly25/logiflow-graphql-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8085
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8085
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8085
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+# NOTIFICATION-SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: logiflow
+  labels:
+    app: notification-service
+spec:
+  type: ClusterIP
+  selector:
+    app: notification-service
+  ports:
+    - port: 8086
+      targetPort: 8086
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: logiflow
+  labels:
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: charly25/logiflow-notification-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8086
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8086
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 5

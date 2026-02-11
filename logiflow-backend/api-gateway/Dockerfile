@@ -15,9 +15,10 @@ WORKDIR /build/api-gateway
 
 # Build application
 RUN apk add --no-cache maven && \
+  mvn -f /build/pom.xml -N -DskipTests install && \
   mvn -f /build/common/pom.xml -DskipTests install && \
-  mvn clean package -DskipTests && \
-  mv target/*.jar /build/app.jar
+  mvn -f /build/api-gateway/pom.xml clean package -DskipTests && \
+  mv /build/api-gateway/target/*.jar /build/app.jar
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
