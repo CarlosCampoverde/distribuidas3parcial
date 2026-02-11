@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiFlow - Notificaciones en Tiempo Real</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .status {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-indicator.connected {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .status-indicator.disconnected {
+            background: #ef4444;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .event {
+            background: #f8fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+        .event.pedido {
+            border-left-color: #3b82f6;
+        }
+        .event.ubicacion {
+            border-left-color: #10b981;
+        }
+        .event-time {
+            color: #64748b;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+        .event-content {
+            color: #1e293b;
+        }
+        .event-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .controls {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px;
+            font-style: italic;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📡 LogiFlow - Notificaciones en Tiempo Real</h1>
+        
+        <div class="status">
+            <span class="status-indicator" id="statusIndicator"></span>
+            <strong>Estado de Conexión:</strong> <span id="connectionStatus">Desconectado</span>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>📦 Eventos de Pedidos</h2>
+                <div id="pedidosContainer">
+                    <div class="empty-state">Esperando eventos de pedidos...</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📍 Ubicaciones de Repartidores</h2>
+                <div id="ubicacionesContainer">
+                    <div class="empty-state">Esperando actualizaciones de ubicación...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="connectBtn" onclick="connect()">🔌 Conectar WebSocket</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>❌ Desconectar</button>
+            <button onclick="clearEvents()">🗑️ Limpiar Eventos</button>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        const WS_URL = 'http://localhost:8086/ws';
+
+        function connect() {
+            const socket = new SockJS(WS_URL);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+                console.log('✅ Conectado: ' + frame);
+                updateConnectionStatus(true);
+
+                // Subscribe to pedido events
+                stompClient.subscribe('/topic/pedidos', function(message) {
+                    const event = JSON.parse(message.body);
+                    displayPedidoEvent(event);
+                });
+
+                // Subscribe to ubicacion events
+                stompClient.subscribe('/topic/ubicaciones', function(message) {
+                    const event = JSON.parse(message.body);
+                    displayUbicacionEvent(event);
+                });
+
+            }, function(error) {
+                console.error('❌ Error de conexión:', error);
+                updateConnectionStatus(false);
+                setTimeout(connect, 5000); // Retry after 5 seconds
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+                console.log('🔌 Desconectado');
+            }
+            updateConnectionStatus(false);
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                statusIndicator.classList.remove('disconnected');
+                statusText.textContent = 'Conectado ✅';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                statusIndicator.classList.add('disconnected');
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = 'Desconectado ❌';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        function displayPedidoEvent(event) {
+            const container = document.getElementById('pedidosContainer');
+            
+            // Remove empty state
+            if (container.querySelector('.empty-state')) {
+                container.innerHTML = '';
+            }
+
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event pedido';
+            
+            const badgeClass = event.estadoNuevo === 'ENTREGADO' ? 'badge-success' : 
+                               event.estadoNuevo === 'EN_CAMINO' ? 'badge-info' : 'badge-warning';
+
+            eventDiv.innerHTML = `
+                <div class="event-time">${new Date(event.timestamp).toLocaleString('es-CO')}</div>
+                <div class="event-content">
+                    <strong>Pedido ${event.codigoPedido}</strong><br>
+                    Estado cambió de <strong>${event.estadoAnterior}</strong> a <strong>${event.estadoNuevo}</strong>
+                    <br>
+                    <span class="event-badge ${badgeClass}">${event.estadoNuevo}</span>
+                    ${event.repartidorId ? ` - Repartidor ID: ${event.repartidorId}` : ''}
+                </div>
+            `;
+
+            container.insertBefore(eventDiv, container.firstChild);
+
+            // Keep only last 10 events
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function displayUbicacionEvent(event) {
+            const container = document.getElementById('ubicacionesContainer');
+            
+            // Remove empty state
+            if (container.querySelector('.empty-state')) {
+                container.innerHTML = '';
+            }
+
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event ubicacion';
+
+            eventDiv.innerHTML = `
+                <div class="event-time">${new Date(event.timestamp).toLocaleString('es-CO')}</div>
+                <div class="event-content">
+                    <strong>${event.nombreCompleto}</strong><br>
+                    📍 Ubicación: (${event.latitud.toFixed(4)}, ${event.longitud.toFixed(4)})<br>
+                    <span class="event-badge badge-info">${event.estado}</span>
+                    ${event.pedidoAsignado ? ` - Pedido: ${event.pedidoAsignado}` : ' - Sin pedido asignado'}
+                </div>
+            `;
+
+            container.insertBefore(eventDiv, container.firstChild);
+
+            // Keep only last 10 events
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function clearEvents() {
+            document.getElementById('pedidosContainer').innerHTML = '<div class="empty-state">Esperando eventos de pedidos...</div>';
+            document.getElementById('ubicacionesContainer').innerHTML = '<div class="empty-state">Esperando actualizaciones de ubicación...</div>';
+        }
+
+        // Auto-connect on page load
+        window.onload = function() {
+            console.log('🚀 Página cargada - Conectando automáticamente...');
+            connect();
+        };
+
+        // Disconnect on page unload
+        window.onbeforeunload = function() {
+            disconnect();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logiflow-ingress
+  namespace: logiflow
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/websocket-services: "notification-service"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: logiflow.local
+    http:
+      paths:
+      # API Gateway - Default
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 8080
+      
+      # GraphQL Service
+      - path: /graphql
+        pathType: Prefix
+        backend:
+          service:
+            name: graphql-service
+            port:
+              number: 8085
+      
+      - path: /graphiql
+        pathType: Prefix
+        backend:
+          service:
+            name: graphql-service
+            port:
+              number: 8085
+      
+      # WebSocket / Notification Service
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 8086
+      
+      # RabbitMQ Management (dev only)
+      - path: /rabbitmq
+        pathType: Prefix
+        backend:
+          service:
+            name: rabbitmq-management
+            port:
+              number: 15672

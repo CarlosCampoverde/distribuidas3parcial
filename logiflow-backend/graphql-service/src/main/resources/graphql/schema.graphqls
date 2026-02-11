@@ -1,0 +1,217 @@
+# ==========================================
+# TIPOS DE DATOS
+# ==========================================
+
+type Pedido {
+    id: ID!
+    codigoPedido: String!
+    clienteId: ID!
+    repartidorId: ID
+    estado: EstadoPedido!
+    tipoEntrega: TipoEntrega!
+    origenDireccion: String!
+    destinoDireccion: String!
+    origenLatitud: Float!
+    origenLongitud: Float!
+    destinoLatitud: Float!
+    destinoLongitud: Float!
+    distanciaKm: Float!
+    pesoKg: Float!
+    costoEstimado: Float!
+    descripcion: String
+    fechaCreacion: String!
+    fechaAsignacion: String
+    fechaEntrega: String
+}
+
+type Repartidor {
+    id: ID!
+    usuarioId: ID!
+    nombreCompleto: String!
+    licencia: String!
+    telefono: String!
+    tipoVehiculo: TipoVehiculo!
+    placaVehiculo: String!
+    estado: EstadoRepartidor!
+    ubicacionLatitud: Float
+    ubicacionLongitud: Float
+    ultimaActualizacionUbicacion: String
+}
+
+type Factura {
+    id: ID!
+    numeroFactura: String!
+    pedidoId: ID!
+    clienteId: ID!
+    subtotal: Float!
+    impuestos: Float!
+    total: Float!
+    estado: EstadoFactura!
+    fechaCreacion: String!
+    fechaPago: String
+}
+
+type PedidoCompleto {
+    pedido: Pedido!
+    repartidor: Repartidor
+    factura: Factura
+}
+
+type DashboardCliente {
+    clienteId: ID!
+    totalPedidos: Int!
+    gastoTotal: Float!
+    pedidosActivos: [Pedido!]!
+    ultimasFacturas: [Factura!]!
+}
+
+type FlotaResumen {
+    total: Int!
+    disponibles: Int!
+    enRuta: Int!
+    mantenimiento: Int!
+}
+
+type KPIDiario {
+    fecha: String!
+    totalPedidos: Int!
+    pedidosEntregados: Int!
+    pedidosCancelados: Int!
+    facturacionTotal: Float!
+    tiempoPromedioEntrega: Float
+}
+
+type MutationResponse {
+    success: Boolean!
+    message: String!
+    pedido: Pedido
+    repartidor: Repartidor
+    factura: Factura
+}
+
+# ==========================================
+# ENUMS
+# ==========================================
+
+enum EstadoPedido {
+    RECIBIDO
+    ASIGNADO
+    EN_RUTA
+    ENTREGADO
+    CANCELADO
+}
+
+enum TipoEntrega {
+    URBANA
+    INTERMUNICIPAL
+    NACIONAL
+}
+
+enum TipoVehiculo {
+    MOTORIZADO
+    VEHICULO_LIVIANO
+    CAMION
+}
+
+enum EstadoRepartidor {
+    DISPONIBLE
+    EN_RUTA
+    MANTENIMIENTO
+    INACTIVO
+}
+
+enum EstadoFactura {
+    BORRADOR
+    EMITIDA
+    PAGADA
+    ANULADA
+}
+
+# ==========================================
+# INPUTS
+# ==========================================
+
+input PedidoFiltro {
+    zonaId: ID
+    estado: EstadoPedido
+    tipoEntrega: TipoEntrega
+    fechaDesde: String
+    fechaHasta: String
+}
+
+input CrearPedidoInput {
+    clienteId: ID!
+    origenDireccion: String!
+    destinoDireccion: String!
+    origenLatitud: Float!
+    origenLongitud: Float!
+    destinoLatitud: Float!
+    destinoLongitud: Float!
+    distanciaKm: Float!
+    pesoKg: Float!
+    tipoEntrega: TipoEntrega!
+    descripcion: String
+}
+
+input CrearRepartidorInput {
+    usuarioId: ID!
+    nombreCompleto: String!
+    licencia: String!
+    telefono: String!
+    tipoVehiculo: TipoVehiculo!
+    placaVehiculo: String!
+}
+
+input GenerarFacturaInput {
+    pedidoId: ID!
+    clienteId: ID!
+    tipoEntrega: TipoEntrega!
+    distanciaKm: Float!
+    pesoKg: Float!
+}
+
+# ==========================================
+# QUERIES
+# ==========================================
+
+type Query {
+    # Pedidos
+    pedido(id: ID!): Pedido
+    pedidos(filtro: PedidoFiltro, limit: Int, offset: Int): [Pedido!]!
+    pedidoCompleto(id: ID!): PedidoCompleto
+    
+    # Dashboard Cliente
+    dashboardCliente(clienteId: ID!): DashboardCliente!
+    
+    # Repartidores
+    repartidor(id: ID!): Repartidor
+    repartidores(estado: EstadoRepartidor): [Repartidor!]!
+    repartidoresDisponibles: [Repartidor!]!
+    
+    # Flota y KPI
+    flotaActiva(zonaId: ID): FlotaResumen!
+    kpiDiario(fecha: String!, zonaId: ID): KPIDiario!
+    
+    # Facturas
+    factura(id: ID!): Factura
+    facturasPorCliente(clienteId: ID!): [Factura!]!
+    facturasPorPedido(pedidoId: ID!): Factura
+}
+
+# ==========================================
+# MUTATIONS
+# ==========================================
+
+type Mutation {
+    # Pedidos
+    crearPedido(input: CrearPedidoInput!): MutationResponse!
+    actualizarEstadoPedido(id: ID!, estado: EstadoPedido!, repartidorId: ID): MutationResponse!
+    
+    # Repartidores
+    crearRepartidor(input: CrearRepartidorInput!): MutationResponse!
+    actualizarUbicacionRepartidor(id: ID!, latitud: Float!, longitud: Float!): MutationResponse!
+    actualizarEstadoRepartidor(id: ID!, estado: EstadoRepartidor!): MutationResponse!
+    
+    # Facturas
+    generarFactura(input: GenerarFacturaInput!): MutationResponse!
+}

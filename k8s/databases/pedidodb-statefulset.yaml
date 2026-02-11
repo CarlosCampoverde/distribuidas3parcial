@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pedidodb
+  namespace: logiflow
+spec:
+  serviceName: pedidodb-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pedidodb
+  template:
+    metadata:
+      labels:
+        app: pedidodb
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "pedidodb"
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: DB_USERNAME
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: db-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: pedidodb-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - logiuser
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - logiuser
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      volumes:
+      - name: pedidodb-storage
+        persistentVolumeClaim:
+          claimName: pedidodb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedidodb-service
+  namespace: logiflow
+spec:
+  selector:
+    app: pedidodb
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None

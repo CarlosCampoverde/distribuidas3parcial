@@ -1,0 +1,20 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: notification-service
+  
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: logiflow
+    password: logiflow123
+
+logging:
+  level:
+    com.entregaexpress: DEBUG
+    org.springframework.amqp: DEBUG
+    org.springframework.messaging: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,63 @@
+# LogiFlow - Kubernetes All-in-One Deployment
+
+# This file contains all Kubernetes resources in a single file
+# for quick deployment. Use individual files in k8s/ for production.
+
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logiflow
+  labels:
+    name: logiflow
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logiflow-config
+  namespace: logiflow
+data:
+  AUTH_DB_URL: "jdbc:postgresql://authdb-service:5432/authdb"
+  PEDIDO_DB_URL: "jdbc:postgresql://pedidodb-service:5432/pedidodb"
+  FLEET_DB_URL: "jdbc:postgresql://fleetdb-service:5432/fleetdb"
+  BILLING_DB_URL: "jdbc:postgresql://billingdb-service:5432/billingdb"
+  DB_USERNAME: "logiuser"
+  DB_DRIVER: "org.postgresql.Driver"
+  DB_PLATFORM: "org.hibernate.dialect.PostgreSQLDialect"
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USERNAME: "logiflow"
+  RABBITMQ_VHOST: "/"
+  AUTH_SERVICE_URL: "http://auth-service:8081"
+  PEDIDO_SERVICE_URL: "http://pedido-service:8082"
+  FLEET_SERVICE_URL: "http://fleet-service:8083"
+  BILLING_SERVICE_URL: "http://billing-service:8084"
+  JPA_HIBERNATE_DDL_AUTO: "update"
+  JPA_SHOW_SQL: "false"
+  JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_APP: "DEBUG"
+
+---
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logiflow-secrets
+  namespace: logiflow
+type: Opaque
+data:
+  db-password: bG9naXBhc3MxMjM=
+  rabbitmq-password: bG9naWZsb3cxMjM=
+  jwt-secret: bWlTdXBlclNlY3JldG8xMjNATG9naUZsb3cyMDI0U2VjdXJlS2V5
+  pgadmin-password: YWRtaW4xMjM=
+
+---
+# NOTE: Apply this file with:
+# kubectl apply -f logiflow-k8s-all-in-one.yaml
+#
+# Then apply PVCs, StatefulSets, and Deployments from k8s/ directory
+# This file only contains namespace, configmap, and secrets for quick setup

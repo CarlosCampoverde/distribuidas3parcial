@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fleetdb
+  namespace: logiflow
+spec:
+  serviceName: fleetdb-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleetdb
+  template:
+    metadata:
+      labels:
+        app: fleetdb
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "fleetdb"
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: DB_USERNAME
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: db-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: fleetdb-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - logiuser
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - logiuser
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      volumes:
+      - name: fleetdb-storage
+        persistentVolumeClaim:
+          claimName: fleetdb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleetdb-service
+  namespace: logiflow
+spec:
+  selector:
+    app: fleetdb
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None

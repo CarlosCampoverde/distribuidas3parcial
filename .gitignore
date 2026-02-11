@@ -1,0 +1,38 @@
+# Ignore Maven target directories
+**/target/
+**/bin/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Ignore IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test reports
+**/test-output/
+**/test-results/
+
+# Ignore compiled files
+*.class
+
+# Ignore package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiFlow GraphQL - GraphiQL IDE</title>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            width: 100%;
+            overflow: hidden;
+        }
+        #graphiql {
+            height: 100vh;
+        }
+        .topBar {
+            background: #1976d2;
+            color: white;
+            padding: 10px 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/graphiql@3/graphiql.min.css" />
+</head>
+<body>
+    <div class="topBar">
+        <h2 style="margin: 0;">🚀 LogiFlow GraphQL Service - Interactive IDE</h2>
+    </div>
+    <div id="graphiql">Cargando GraphiQL...</div>
+    <script src="https://unpkg.com/graphiql@3/graphiql.min.js" type="application/javascript"></script>
+    <script>
+        const fetcher = GraphiQL.createFetcher({
+            url: '/graphql',
+        });
+
+        const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+        root.render(
+            React.createElement(GraphiQL, { 
+                fetcher: fetcher,
+                defaultEditorToolsVisibility: true,
+                defaultQuery: `# Bienvenido a LogiFlow GraphQL Service
+# Presiona el botón de play para ejecutar queries
+
+# Query de ejemplo: Verificar que GraphQL funciona
+query {
+  __schema {
+    queryType {
+      name
+    }
+  }
+}
+
+# Ejemplo: Ver todos los pedidos
+# query {
+#   pedidos(limit: 10) {
+#     id
+#     codigoPedido
+#     estado
+#     tipoEntrega
+#   }
+# }
+`
+            })
+        );
+    </script>
+</body>
+</html>
